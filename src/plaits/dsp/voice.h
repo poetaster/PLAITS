@@ -62,7 +62,7 @@
 
 namespace plaits {
 
-const int kMaxEngines = 18;
+const int kMaxEngines = 19;
 const int kMaxTriggerDelay = 8;
 const int kTriggerDelay = 5;
 

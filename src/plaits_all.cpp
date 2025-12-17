@@ -27,12 +27,12 @@
 #include "plaits/dsp/engine/virtual_analog_engine.inc"
 #include "plaits/dsp/engine/waveshaping_engine.inc"
 #include "plaits/dsp/engine/wavetable_engine.inc"
-#include "plaits/dsp/engine/wave_terrain_engine.inc"
 #include "plaits/dsp/physical_modelling/modal_voice.inc"
 #include "plaits/dsp/physical_modelling/resonator.inc"
 #include "plaits/dsp/physical_modelling/string.inc"
 #include "plaits/dsp/physical_modelling/string_voice.inc"
 
+#include "plaits/dsp/engine/wave_terrain_engine.inc"
 #include "plaits/dsp/engine/virtual_analog_vcf_engine.inc"
 #include "plaits/dsp/engine/phase_distortion_engine.inc"
 
