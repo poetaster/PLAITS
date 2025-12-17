@@ -115,7 +115,7 @@ void SixOpEngine::Render(
 
     for (int i = 0; i < kNumSixOpVoices; ++i) {
       voice_[i].LoadPatch(&patches_[patch_index]);
-      Voice<6>::Parameters* p = voice_[i].mutable_parameters();
+      fm::Voice<6>::Parameters* p = voice_[i].mutable_parameters();
       p->sustain = i == 0 ? true : false;
       p->gate = false;
       p->note = parameters.note;
@@ -130,14 +130,14 @@ void SixOpEngine::Render(
       voice_[active_voice_].LoadPatch(&patches_[patch_index]);
       voice_[active_voice_].mutable_lfo()->Reset();
     }
-    Voice<6>::Parameters* p = voice_[active_voice_].mutable_parameters();
+    fm::Voice<6>::Parameters* p = voice_[active_voice_].mutable_parameters();
     p->note = parameters.note;
     p->velocity = parameters.accent;
     p->envelope_control = parameters.morph;
     voice_[active_voice_].mutable_lfo()->Step(float(size));
     
     for (int i = 0; i < kNumSixOpVoices; ++i) {
-      Voice<6>::Parameters* p = voice_[i].mutable_parameters();
+      fm::Voice<6>::Parameters* p = voice_[i].mutable_parameters();
       p->brightness = parameters.timbre;
       p->sustain = false;
       p->gate = (parameters.trigger & TRIGGER_HIGH) && (i == active_voice_);
