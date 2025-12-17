@@ -31,7 +31,7 @@
 
 #include "plaits/dsp/engine/engine.h"
 #include "plaits/dsp/oscillator/variable_saw_oscillator.h"
-#include "plaits/dsp/oscillator/variable_shape_oscillator_one.h"
+#include "plaits/dsp/oscillator/variable_shape_oscillator.h"
 
 #define VA_VARIANT 2
 
@@ -44,6 +44,7 @@ class VirtualAnalogEngine : public Engine {
   
   virtual void Init(stmlib::BufferAllocator* allocator);
   virtual void Reset();
+  virtual void LoadUserData(const uint8_t* user_data) { }
   virtual void Render(const EngineParameters& parameters,
       float* out,
       float* aux,
@@ -53,10 +54,10 @@ class VirtualAnalogEngine : public Engine {
  private:
   float ComputeDetuning(float detune) const;
   
-  VariShapeOscillator primary_;
-  VariShapeOscillator auxiliary_;
+  VariableShapeOscillator primary_;
+  VariableShapeOscillator auxiliary_;
 
-  VariShapeOscillator sync_;
+  VariableShapeOscillator sync_;
   VariableSawOscillator variable_saw_;
 
   float auxiliary_amount_;

@@ -1,4 +1,4 @@
-// Copyright 2016 Emilie Gillet.
+// Copyright 2021 Emilie Gillet.
 //
 // Author: Emilie Gillet (emilie.o.gillet@gmail.com)
 //
@@ -24,50 +24,64 @@
 //
 // -----------------------------------------------------------------------------
 //
-// One voice of modal synthesis.
+// Phase distortion and phase modulation with an asymmetric triangle as the
+// modulator.
 
-#include "plaits/dsp/engine/modal_engine.h"
+#include "plaits/dsp/engine2/phase_distortion_engine.h"
 
 #include <algorithm>
+
+#include "stmlib/dsp/parameter_interpolator.h"
+
+#include "plaits/dsp/oscillator/sine_oscillator.h"
+#include "plaits/resources.h"
 
 namespace plaits {
 
 using namespace std;
 using namespace stmlib;
 
-void ModalEngine::Init(BufferAllocator* allocator) {
-  temp_buffer_ = allocator->Allocate<float>(kMaxBlockSize);
-  harmonics_lp_ = 0.0f;
-  Reset();
+void PhaseDistortionEngine::Init(BufferAllocator* allocator) {
+  modulator_.Init();
+  shaper_.Init();
+  temp_buffer_ = allocator->Allocate<float>(kMaxBlockSize * 4);
 }
 
-void ModalEngine::Reset() {
-  voice_.Init();
+void PhaseDistortionEngine::Reset() {
+  
 }
 
-void ModalEngine::Render(
+void PhaseDistortionEngine::Render(
     const EngineParameters& parameters,
     float* out,
     float* aux,
     size_t size,
     bool* already_enveloped) {
-  fill(&out[0], &out[size], 0.0f);
-  fill(&aux[0], &aux[size], 0.0f);
+  const float f0 = 0.5f * NoteToFrequency(parameters.note);
+  const float modulator_f = min(0.25f, f0 * SemitonesToRatio(Interpolate(
+      lut_fm_frequency_quantizer,
+      parameters.harmonics,
+      128.0f)));
+  const float pw = 0.5f + parameters.morph * 0.49f;
+  const float amount = 8.0f * parameters.timbre * parameters.timbre * \
+      (1.0f - modulator_f * 3.8f);
   
-  ONE_POLE(harmonics_lp_, parameters.harmonics, 0.01f);
+  // Upsample by 2x
+  float* synced = &temp_buffer_[0];
+  float* free_running = &temp_buffer_[2 * size];
+  shaper_.Render<true, true>(
+      f0, modulator_f, pw, 0.0f, amount, synced, 2 * size);
+  modulator_.Render<false, true>(
+      f0, modulator_f, pw, 0.0f, amount, free_running, 2 * size);
   
-  voice_.Render(
-      parameters.trigger & TRIGGER_UNPATCHED,
-      parameters.trigger & TRIGGER_RISING_EDGE,
-      parameters.accent,
-      NoteToFrequency(parameters.note),
-      harmonics_lp_,
-      parameters.timbre,
-      parameters.morph,
-      temp_buffer_,
-      out,
-      aux,
-      size);
+  for (size_t i = 0; i < size; ++i) {
+    // Naive 0.5x downsampling.
+    out[i] = 0.5f * Sine(*synced++ + 0.25f);
+    out[i] += 0.5f * Sine(*synced++ + 0.25f);
+    
+    aux[i] = 0.5f * Sine(*free_running++ + 0.25f);
+    aux[i] += 0.5f * Sine(*free_running++ + 0.25f);
+  }
 }
 
 }  // namespace plaits
