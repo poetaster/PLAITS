@@ -278,7 +278,7 @@ void loop1() {
     engineInc = 0;
     voices[0].patch.engine = engineCount;
   }
-  if (engineCount > 19) engineCount = 0;
+  if (engineCount > 18) engineCount = 0;
 
   delay(3000);
 
