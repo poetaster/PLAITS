@@ -273,7 +273,7 @@ void loop1() {
   timbre_in = timbre;
 
   engineInc++ ;
-  if (engineInc > 4) {
+  if (engineInc > 2) {
     engineCount ++; // don't switch engine so often :)
     engineInc = 0;
     voices[0].patch.engine = engineCount;
