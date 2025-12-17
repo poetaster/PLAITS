@@ -36,11 +36,7 @@
 
 namespace plaits {
 
-const int kChordNumNotes = 5;
-const int kChordNumVoices = 1;
-const int kChordNumHarmonics = 4;
-    
-const int kChordNumChords = 17;
+const int kChordNumHarmonics = 3;
 
 class ChordEngine : public Engine {
  public:
