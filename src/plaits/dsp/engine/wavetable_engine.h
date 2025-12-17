@@ -29,6 +29,8 @@
 #ifndef PLAITS_DSP_ENGINE_WAVETABLE_ENGINE_H_
 #define PLAITS_DSP_ENGINE_WAVETABLE_ENGINE_H_
 
+#include "stmlib/dsp/hysteresis_quantizer.h"
+
 #include "plaits/dsp/engine/engine.h"
 #include "plaits/dsp/oscillator/wavetable_oscillator.h"
 
@@ -41,7 +43,6 @@ class WavetableEngine : public Engine {
   
   virtual void Init(stmlib::BufferAllocator* allocator);
   virtual void Reset();
-  virtual void LoadUserData(const uint8_t* user_data);
   virtual void Render(const EngineParameters& parameters,
       float* out,
       float* aux,
@@ -49,8 +50,6 @@ class WavetableEngine : public Engine {
       bool* already_enveloped);
   
  private:
-  float ReadWave(int x, int y, int z, int phase_i, float phase_f);
-   
   float phase_;
   
   float x_pre_lp_;
@@ -65,10 +64,6 @@ class WavetableEngine : public Engine {
   float previous_y_;
   float previous_z_;
   float previous_f0_;
-  
-  // Maps a (bank, X, Y) coordinate to a waveform index.
-  // This allows all waveforms to be reshuffled by the user to create new maps.
-  const int16_t** wave_map_;
   
   Differentiator diff_out_;
   

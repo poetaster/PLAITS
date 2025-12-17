@@ -42,7 +42,6 @@ class HiHatEngine : public Engine {
   
   virtual void Init(stmlib::BufferAllocator* allocator);
   virtual void Reset();
-  virtual void LoadUserData(const uint8_t* user_data) { }
   virtual void Render(const EngineParameters& parameters,
       float* out,
       float* aux,
@@ -50,10 +49,10 @@ class HiHatEngine : public Engine {
       bool* already_enveloped);
 
  private:
-  HiHat<SquareNoise, SwingVCA, true, false> hi_hat_1_;
-  HiHat<RingModNoise, LinearVCA, false, true> hi_hat_2_;
+  HiHat<SquareNoise, SwingVCA, true> hi_hat_1_;
+  HiHat<RingModNoise, LinearVCA, false> hi_hat_2_;
   
-  float* temp_buffer_;
+  float* temp_buffer_[2];
   
   DISALLOW_COPY_AND_ASSIGN(HiHatEngine);
 };
