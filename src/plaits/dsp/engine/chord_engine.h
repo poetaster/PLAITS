@@ -36,15 +36,11 @@
 
 namespace plaits {
 
-<<<<<<< Updated upstream
 const int kChordNumNotes = 5;
 const int kChordNumVoices = 1;
 const int kChordNumHarmonics = 4;
     
 const int kChordNumChords = 17;
-=======
-const int kChordNumHarmonics = 3;
->>>>>>> Stashed changes
 
 class ChordEngine : public Engine {
  public:
