@@ -54,7 +54,7 @@
 #include "plaits/dsp/engine/wavetable_engine.h"
 #include "plaits/dsp/engine/wave_terrain_engine.h"
 #include "plaits/dsp/engine/virtual_analog_vcf_engine.h"
-//#include "plaits/dsp/engine/phase_distortion_engine.h"
+#include "plaits/dsp/engine/phase_distortion_engine.h"
 
 #include "plaits/dsp/envelope.h"
 
@@ -62,7 +62,7 @@
 
 namespace plaits {
 
-const int kMaxEngines = 18;
+const int kMaxEngines = 19;
 const int kMaxTriggerDelay = 8;
 const int kTriggerDelay = 5;
 
@@ -212,7 +212,7 @@ class Voice {
   HiHatEngine hi_hat_engine_;
   WaveTerrainEngine wave_terrain_engine_;
   VirtualAnalogVCFEngine virtual_analog_vcf_engine_;
-  //PhaseDistortionEngine phase_distortion_engine_;
+  PhaseDistortionEngine phase_distortion_engine_;
 
   stmlib::HysteresisQuantizer engine_quantizer_;
   
