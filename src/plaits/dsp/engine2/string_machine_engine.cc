@@ -32,10 +32,13 @@
 
 #include "plaits/resources.h"
 
-namespace plaits {
-
 using namespace std;
 using namespace stmlib;
+
+namespace plaits {
+namespace smachine {
+
+
 
 void StringMachineEngine::Init(BufferAllocator* allocator) {
   for (int i = 0; i < kChordNumNotes; ++i) {
@@ -54,8 +57,8 @@ void StringMachineEngine::Reset() {
   ensemble_.Reset();
 }
 
-const int kRegistrationTableSize = 11;
-const float registrations[kRegistrationTableSize][kChordNumHarmonics * 2] = {
+const int sRegistrationTableSize = 11;
+const float registrations[sRegistrationTableSize][kChordNumHarmonics * 2] = {
   { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },    // Saw
   { 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f },    // Saw + saw
   { 0.4f, 0.0f, 0.2f, 0.0f, 0.4f, 0.0f },    // Full saw
@@ -72,7 +75,7 @@ const float registrations[kRegistrationTableSize][kChordNumHarmonics * 2] = {
 void StringMachineEngine::ComputeRegistration(
     float registration,
     float* amplitudes) {
-  registration *= (kRegistrationTableSize - 1.001f);
+  registration *= (sRegistrationTableSize - 1.001f);
   MAKE_INTEGRAL_FRACTIONAL(registration);
   
   for (int i = 0; i < kChordNumHarmonics * 2; ++i) {
@@ -135,4 +138,5 @@ void StringMachineEngine::Render(
   ensemble_.Process(out, aux, size);
 }
 
+ }  // namespace smachine
 }  // namespace plaits

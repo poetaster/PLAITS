@@ -4,6 +4,8 @@
 #include <STMLIB.h>
 
 #include "plaits/resources.cc"
+
+
 #include "plaits/dsp/voice.cc"
 #include "plaits/dsp/speech/lpc_speech_synth.cc"
 #include "plaits/dsp/speech/lpc_speech_synth_controller.cc"
@@ -32,7 +34,15 @@
 #include "plaits/dsp/physical_modelling/string.cc"
 #include "plaits/dsp/physical_modelling/string_voice.cc"
 
-#include "plaits/dsp/engine/wave_terrain_engine.cc"
-#include "plaits/dsp/engine/virtual_analog_vcf_engine.cc"
-#include "plaits/dsp/engine/phase_distortion_engine.cc"
+#include "plaits/dsp/chords/chord_bank.cc"
+#include "plaits/dsp/fm/algorithms.cc"
+#include "plaits/dsp/fm/dx_units.cc"
+
+
+#include "plaits/dsp/engine2/wave_terrain_engine.cc"
+#include "plaits/dsp/engine2/virtual_analog_vcf_engine.cc"
+#include "plaits/dsp/engine2/phase_distortion_engine.cc"
+#include "plaits/dsp/engine2/six_op_engine.cc"
+#include "plaits/dsp/engine2/chiptune_engine.cc"
+#include "plaits/dsp/engine2/string_machine_engine.cc"
 

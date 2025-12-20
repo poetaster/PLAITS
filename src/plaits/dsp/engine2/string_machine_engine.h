@@ -35,6 +35,7 @@
 #include "plaits/dsp/fx/ensemble.h"
 
 namespace plaits {
+namespace smachine {
 
 class StringMachineEngine : public Engine {
  public:
@@ -65,6 +66,7 @@ class StringMachineEngine : public Engine {
   DISALLOW_COPY_AND_ASSIGN(StringMachineEngine);
 };
 
+ }  // namespace smachine
 }  // namespace plaits
 
 #endif  // PLAITS_DSP_ENGINE_STRING_MACHINE_ENGINE_H_

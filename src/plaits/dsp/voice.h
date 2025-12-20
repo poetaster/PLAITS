@@ -229,7 +229,7 @@ SixOpEngine six_op_engine_3;
 VirtualAnalogVCFEngine virtual_analog_vcf_engine_;
 PhaseDistortionEngine phase_distortion_engine_;
 WaveTerrainEngine wave_terrain_engine_;
-StringMachineEngine string_machine_engine_;
+smachine::StringMachineEngine string_machine_engine_;
 ChiptuneEngine chiptune_engine_;
 
   stmlib::HysteresisQuantizer2 engine_quantizer_;
