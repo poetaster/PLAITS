@@ -2,14 +2,19 @@
   (c) 2025 blueprint@poetaster.de
   GPLv3 the libraries are MIT as the originals for STM from MI were also MIT.
 
+  some parts adapted from ledlaux
+  Copyright (c) 2025 Vadims Maksimovs <ledlaux@gmail.com>
+  MIT licence
+
+
   Change the PWMOUT number to the pin you are doing pwm on.
   Works fine 133mHz -O2 on an RP2350
 
   BE CAREFULL, can be loud or high pitched. Or BOTH!
-  
+
 */
 
-bool debugging = true;
+bool debug = true;
 
 #include <Arduino.h>
 #include "stdio.h"
@@ -26,41 +31,38 @@ PWMAudio DAC(PWMOUT);  // 16 bit PWM audio
 #include <STMLIB.h>
 #include <PLAITS.h>
 
-plaits::Modulations modulations;
-plaits::Patch patch;
-plaits::Voice voice;
+#define WORKSPACE_SIZE 65536
+constexpr int AUDIO_BLOCK = plaits::kBlockSize;
 
-//Settings settings;
-//Ui ui;
-//UserData user_data;
-//UserDataReceiver user_data_receiver;
+// ==================== MEMORY BUFFERS ====================
+static uint8_t shared_plaits_workspace[WORKSPACE_SIZE] __attribute__((aligned(4)));
+static uint16_t clouds_buffer[65536];
+static uint16_t oliverb_buffer[131072];
 
-stmlib::BufferAllocator allocator;
+int16_t left[AUDIO_BLOCK];
+int16_t right[AUDIO_BLOCK];
 
-//float a0 = (440.0 / 8.0) / kSampleRate; //48000.00;
-const size_t   kBlockSize = plaits::kBlockSize;
-
-plaits::Voice::Frame outputPlaits[plaits::kBlockSize];
-//plaits::Voice::out_buffer renderBuffer;
-
-struct Unit {
-  plaits::Voice       *voice_;
-  plaits::Modulations modulations;
-  plaits::Patch       patch;
-  float               transposition_;
-  float               octave_;
-  short               trigger_connected;
-  short               trigger_toggle;
-  bool                last_trig; // from braids
-
-  char                *shared_buffer;
-  void                *info_out;
-  bool                prev_trig;
-  float               sr;
-  int                 sigvs;
+const char* engine_names[] = {
+  "Virtual Analog", "Waveshaping", "FM", "Grain", "Additive", "Wavetable", "Chord", "Speech",
+  "Swarm", "Noise", "Particle", "String", "Modal", "Bass Drum", "Snare Drum", "Hi-Hat",
+  "Six OP 0", "Six OP 1", "Six OP 2", "Six OP 3", "Virtual Analog VCF", "Phase Distortion", "Wave Terrain",
+  "String Machine", "Chiptune"
 };
 
-struct Unit voices[1];
+const size_t   kBlockSize = plaits::kBlockSize;
+
+struct Voice {
+  plaits::Voice* voice_;
+  plaits::Patch patch;
+  plaits::Modulations modulations;
+  plaits::Voice::Frame out_buffer[AUDIO_BLOCK];
+  int pitch;
+  bool last_trig;
+  bool prev_trig;
+  char                *shared_buffer;
+};
+
+Voice voice;
 
 // Plaits modulation vars
 float morph_in = 0.1f; // IN(4);
@@ -81,50 +83,14 @@ float octave_in = 3.f;
 int engineCount = 0;
 int engineInc = 0;
 
-// clock timer  stuff
+// ==================== UTIL ====================
 
-#define TIMER_INTERRUPT_DEBUG         0
-#define _TIMERINTERRUPT_LOGLEVEL_     4
-
-// Can be included as many times as necessary, without `Multiple Definitions` Linker Error
-#include "RPi_Pico_TimerInterrupt.h"
-
-//unsigned int SWPin = CLOCKIN;
-
-#define TIMER0_INTERVAL_MS  20.833333333333
-//24.390243902439025 // 44.1
-// \20.833333333333running at 48Khz
-
-#define DEBOUNCING_INTERVAL_MS   2// 80
-#define LOCAL_DEBUG              0
-
-volatile int counter = 0;
-
-// Init RPI_PICO_Timer, can use any from 0-15 pseudo-hardware timers
-RPI_PICO_Timer ITimer0(0);
-
-bool TimerHandler0(struct repeating_timer *t) {
-  (void) t;
-  bool sync = true;
-  if ( DAC.availableForWrite()) {
-    for (size_t i = 0; i < plaits::kBlockSize; i++) {
-      DAC.write( outputPlaits[i].out); // 244 is mozzi audio bias
-    }
-    counter = 1;
-  }
-
-  return true;
+inline float softClip(float x) {
+  if (x > 1.5f) x = 1.5f;
+  if (x < -1.5f) x = -1.5f;
+  return x * (27.0f + x * x) / (27.0f + 9.0f * x * x);
 }
 
-void cb() {
-  bool sync = true;
-  if ( DAC.availableForWrite()) {
-    for (size_t i = 0; i < plaits::kBlockSize; i++) {
-      DAC.write( outputPlaits[i].out); // 244 is mozzi audio bias
-    }
-    counter = 1;
-  }
-}
 
 // produce some random numbers in ranges.
 double randomDouble(double minf, double maxf)
@@ -132,31 +98,66 @@ double randomDouble(double minf, double maxf)
   return minf + random(1UL << 31) * (maxf - minf) / (1UL << 31);  // use 1ULL<<63 for max double values)
 }
 
-// audio related defines
+void changeEngine(uint8_t engine_idx) {
+  if (debug) {
+    Serial.print("Switching to Engine [");
+    Serial.print(engine_idx);
+    Serial.print("]: ");
+    if (engine_idx < 25) Serial.println(engine_names[engine_idx]);
+  }
+  // Reuse workspace
+  memset(shared_plaits_workspace, 0, WORKSPACE_SIZE);
+  stmlib::BufferAllocator allocator(shared_plaits_workspace, WORKSPACE_SIZE);
+  voice.voice_->Init(&allocator);
 
-//float freqs[12] = { 261.63f, 277.18f, 293.66f, 311.13f, 329.63f, 349.23f, 369.99f, 392.00f, 415.30f, 440.00f, 466.16f, 493.88f};
-float freqs[12] = { 42.f, 44.f, 46.f, 48.f, 49.f, 50.f, 51.f, 53.f, 54.f, 55.f, 56.f, 57.f};
+}
+void updateAudio(uint8_t engine_idx, bool triggerNow, float master_volume = 0.4f) {
 
-int carrier_freq;
+  bool is_drum = (engine_idx >= 13 && engine_idx <= 15);
+  bool is_wave_terrain = (engine_idx == 22);
+  bool is_string_machine = (engine_idx == 23);
+  bool is_chiptune = (engine_idx == 24);
+
+  voice.patch.engine = engine_idx;
+  voice.patch.note = (float)pitch_in;
+
+  // Default Parameter Settings
+  voice.patch.harmonics = harm_in;
+  voice.patch.timbre = timbre_in;
+  voice.patch.morph = morph_in;
+
+  if (is_string_machine) {
+    //voice.patch.harmonics = 0.5f; // Selects Chord (Major/Minor/etc.)
+    voice.patch.timbre = 0.2f;    // Filter Cutoff + Chorus Amount (Avoid 0.5 becouse it makes silence)
+    voice.patch.morph = 0.7f;     // Chorus depth
+    voice.patch.decay = 0.9f;     // Internal VCA/LPG release time
+    voice.modulations.level = 1.0f;
+    voice.modulations.level_patched = true;
+    voice.modulations.trigger = triggerNow ? 1.0f : 0.0f;
+    voice.modulations.trigger_patched = true;
+  }
+  else if (is_wave_terrain || is_chiptune || is_drum) {
+    voice.patch.decay = (is_drum ? 0.6f : 0.7f);
+    voice.modulations.trigger = triggerNow ? 1.0f : 0.0f;
+    voice.modulations.trigger_patched = true;
+    voice.modulations.level = 1.0f;
+    voice.modulations.level_patched = true;
+  }
+  else {
+    voice.patch.decay = 0.2f;
+    voice.modulations.trigger = 1.0f;
+    voice.modulations.trigger_patched = false;
+    voice.modulations.level = 1.0f;
+    voice.modulations.level_patched = true;
+  }
+
+}
 
 void setup() {
-  if (debugging) {
+  if (debug) {
     Serial.begin(57600);
     Serial.println(F("YUP"));
   }
-  // pwm timing setup
-  // we're using a pseudo interrupt for the render callback since internal dac callbacks crash
-  // comment the following block out and uncomment the DAC.onTransmit(cb) line to use the DAC callback method
-
-  if (ITimer0.attachInterruptInterval(TIMER0_INTERVAL_MS, TimerHandler0)) // that's 48kHz
-  {
-    if (debugging) Serial.print(F("Starting  ITimer0 OK, millis() = ")); Serial.println(millis());
-  }  else {
-    if (debugging) Serial.println(F("Can't set ITimer0. Select another freq. or timer"));
-  }
-  
-
-
 
   // set up Pico PWM audio output
   DAC.setBuffers(4, 32); // DMA buffers
@@ -168,83 +169,20 @@ void setup() {
   pinMode(23, OUTPUT);
   digitalWrite(23, HIGH);
 
-  // init the plaits voices
-
-  initVoices();
-  // prefill buffer
-  voices[0].voice_->Render(voices[0].patch, voices[0].modulations,  outputPlaits,  plaits::kBlockSize);
-
-
-
-}
-
-
-void initVoices() {
-
-  // init some params
-  //voices[0] = {};
-  //voices[0].modulations = modulations;
-  voices[0].modulations.engine = 0;
-  voices[0].patch = patch;
-  voices[0].patch.engine = 0;
-  voices[0].transposition_ = 0.;
-  voices[0].patch.decay = decay_in; //0.5f;
-  voices[0].patch.lpg_colour = lpg_in;
-
-  voices[0].patch.note = 48.0;
-  voices[0].patch.harmonics = 0.5;
-  voices[0].patch.morph = 0.3;
-  voices[0].patch.timbre = 0.3;
-  voices[0].last_trig = false;
-
-  voices[0].shared_buffer = (char*)malloc(32756);
-  // init with zeros
-  memset(voices[0].shared_buffer, 0, 32756);
-
-  stmlib::BufferAllocator allocator(voices[0].shared_buffer, 32756);
-
-  voices[0].voice_ = new plaits::Voice;
-  voices[0].voice_->Init(&allocator);
-
-  memset(&voices[0].patch, 0, sizeof(voices[0].patch));
-  memset(&voices[0].modulations, 0, sizeof(voices[0].modulations));
-
-  // start with no CV input
-  voices[0].prev_trig = false;
-  voices[0].modulations.timbre_patched = false;  //(INRATE(3) != calc_ScalarRate);
-  voices[0].modulations.morph_patched = false;   // (INRATE(4) != calc_ScalarRate);
-  voices[0].modulations.trigger_patched = false; //(INRATE(5) != calc_ScalarRate);
-  voices[0].modulations.level_patched = false;   // (INRATE(6) != calc_ScalarRate);
-  // TODO: we don't have an fm input yet.
-  voices[0].modulations.frequency_patched = false;
+  voice.voice_ = new plaits::Voice;
+  voice.pitch = 48;
+  delay(4000);
+  changeEngine(0);
 
 }
 
 void loop() {
-  //voices[0].transposition_ = 0.;
-
-  if ( counter == 1 ) {
-    voices[0].voice_->Render(voices[0].patch, voices[0].modulations,  outputPlaits, plaits::kBlockSize);
-    
-    voices[0].patch.note = pitch_in;
-    voices[0].patch.harmonics = harm_in;
-    voices[0].patch.morph = morph_in;
-    voices[0].patch.timbre = timbre_in;
-    
-    // we're not using triggers, just for reference.
-    if (trigger_in > 0.1 ) {
-      voices[0].modulations.trigger = trigger_in;
-      voices[0].modulations.trigger_patched = true;
-    } else {
-      voices[0].modulations.trigger = 0.0f;
-      voices[0].modulations.trigger_patched = false;
-    }
-
-    counter = 0; // increments on each pass of the timer after the timer writes samples
-  }
-
-
-
+  
+    // first render some audio
+    voice.voice_->Render(voice.patch, voice.modulations, voice.out_buffer, AUDIO_BLOCK);
+    // push it to the dac.
+    for (int i = 0; i < AUDIO_BLOCK; i++)
+      DAC.write(voice.out_buffer[i].out);
 
 }
 
@@ -257,6 +195,14 @@ void setup1() {
 
 // second core deals with ui / control rate updates
 void loop1() {
+
+  engineInc++ ;
+  if (engineInc > 4) {
+    engineCount ++; // don't switch engine so often :)
+    engineInc = 0;
+    voice.patch.engine = engineCount;
+  }
+  if (engineCount > 24) engineCount = 0;
 
   float trigger = randomDouble(0.0, 1.0); // Dust.kr( LFNoise2.kr(0.1).range(0.1, 7) );
   float harmonics = randomDouble(0.0, 0.8); // SinOsc.kr(0.03, 0, 0.5, 0.5).range(0.0, 1.0);
@@ -272,15 +218,10 @@ void loop1() {
   morph_in = morph;
   timbre_in = timbre;
 
-  engineInc++ ;
-  if (engineInc > 4) {
-    engineCount ++; // don't switch engine so often :)
-    engineInc = 0;
-    voices[0].patch.engine = engineCount;
-  }
-  if (engineCount > 19) engineCount = 0;
-
+  changeEngine(engineCount);
+  updateAudio(engineCount, (trigger_in > 0.1), 0.4f);
+  
   delay(3000);
 
-  //voices[0].voice_->Render(voices[0].patch, voices[0].modulations,  outputPlaits, 1);
+
 }
