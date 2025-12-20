@@ -170,13 +170,13 @@ void Voice::Render(
     CONSTRAIN(internal_env_amp, 0.0f, 1.0f);
     speech_engine_.set_prosody_amount(!modulations.trigger_patched || modulations.frequency_patched ? 0.0f : patch.frequency_modulation_amount);
     speech_engine_.set_speed(!modulations.trigger_patched || modulations.morph_patched ? 0.0f : patch.morph_modulation_amount);
-  } else if (engine_index == 15) {
+  } else if (engine_index == 24) {
      if (modulations.trigger_patched && !modulations.timbre_patched) {
-  internal_env_amp_timbre = 0.0f;
-  chiptune_engine_.set_envelope_shape(patch.timbre_modulation_amount);
-  } else {
-  chiptune_engine_.set_envelope_shape(ChiptuneEngine::NO_ENVELOPE);
-  }
+        internal_env_amp_timbre = 0.0f;
+        chiptune_engine_.set_envelope_shape(patch.timbre_modulation_amount);
+    } else {
+        chiptune_engine_.set_envelope_shape(ChiptuneEngine::NO_ENVELOPE);
+    }
   }
 
   // Apply modulations
