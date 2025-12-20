@@ -26,7 +26,7 @@
 //
 // Virtual analog with VCF.
 
-#include "plaits/dsp/engine/virtual_analog_vcf_engine.h"
+#include "plaits/dsp/engine2/virtual_analog_vcf_engine.h"
 
 #include <algorithm>
 

@@ -1,4 +1,4 @@
-// Copyright 2016 Emilie Gillet.
+// Copyright 2021 Emilie Gillet.
 //
 // Author: Emilie Gillet (emilie.o.gillet@gmail.com)
 //
@@ -24,25 +24,47 @@
 //
 // -----------------------------------------------------------------------------
 //
-// LPC10 encoded words extracted from various TI ROMs.
+// Virtual analog oscillator with VCF.
 
-#ifndef PLAITS_DSP_SPEECH_LPC_SPEECH_SYNTH_WORDS_H_
-#define PLAITS_DSP_SPEECH_LPC_SPEECH_SYNTH_WORDS_H_
+#ifndef PLAITS_DSP_ENGINE_VIRTUAL_ANALOG_VCF_ENGINE_H_
+#define PLAITS_DSP_ENGINE_VIRTUAL_ANALOG_VCF_ENGINE_H_
 
-#include "plaits/dsp/speech/lpc_speech_synth_controller.h"
+#include "stmlib/dsp/filter.h"
+
+#include "plaits/dsp/engine/engine.h"
+#include "plaits/dsp/oscillator/variable_saw_oscillator.h"
+#include "plaits/dsp/oscillator/variable_shape_oscillator.h"
 
 namespace plaits {
-
-#define LPC_SPEECH_SYNTH_NUM_WORD_BANKS 5
-
-extern const uint8_t bank_0[1233];
-extern const uint8_t bank_1[900];
-extern const uint8_t bank_2[1552];
-extern const uint8_t bank_3[2524];
-extern const uint8_t bank_4[4802];
-
-extern const LPCSpeechSynthWordBankData word_banks_[LPC_SPEECH_SYNTH_NUM_WORD_BANKS];
+  
+class VirtualAnalogVCFEngine : public Engine {
+ public:
+  VirtualAnalogVCFEngine() { }
+  ~VirtualAnalogVCFEngine() { }
+  
+  virtual void Init(stmlib::BufferAllocator* allocator);
+  virtual void Reset();
+  virtual void LoadUserData(const uint8_t* user_data) { }
+  virtual void Render(const EngineParameters& parameters,
+      float* out,
+      float* aux,
+      size_t size,
+      bool* already_enveloped);
+  
+ private:
+  stmlib::Svf svf_[2];
+  VariableShapeOscillator oscillator_;
+  VariableShapeOscillator sub_oscillator_;
+  
+  float previous_cutoff_;
+  float previous_stage2_gain_;
+  float previous_q_;
+  float previous_gain_;
+  float previous_sub_gain_;
+  
+  DISALLOW_COPY_AND_ASSIGN(VirtualAnalogVCFEngine);
+};
 
 }  // namespace plaits
 
-#endif  // PLAITS_DSP_SPEECH_LPC_SPEECH_SYNTH_WORDS_H_
+#endif  // PLAITS_DSP_ENGINE_VIRTUAL_ANALOG_VCF_ENGINE_H_

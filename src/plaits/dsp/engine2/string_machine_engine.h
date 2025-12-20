@@ -1,4 +1,4 @@
-// Copyright 2016 Emilie Gillet.
+// Copyright 2021 Emilie Gillet.
 //
 // Author: Emilie Gillet (emilie.o.gillet@gmail.com)
 //
@@ -24,52 +24,47 @@
 //
 // -----------------------------------------------------------------------------
 //
-// One voice of modal synthesis.
+// String machine emulation with filter and chorus.
 
-#include "plaits/dsp/engine/modal_engine.h"
+#ifndef PLAITS_DSP_ENGINE_STRING_MACHINE_ENGINE_H_
+#define PLAITS_DSP_ENGINE_STRING_MACHINE_ENGINE_H_
 
-#include <algorithm>
+#include "plaits/dsp/chords/chord_bank.h"
+#include "plaits/dsp/engine/chord_engine.h"
+#include "stmlib/dsp/filter.h"
+#include "plaits/dsp/fx/ensemble.h"
 
 namespace plaits {
 
-using namespace std;
-using namespace stmlib;
-
-void ModalEngine::Init(BufferAllocator* allocator) {
-  temp_buffer_ = allocator->Allocate<float>(kMaxBlockSize);
-  harmonics_lp_ = 0.0f;
-  Reset();
-}
-
-void ModalEngine::Reset() {
-  voice_.Init();
-}
-
-void ModalEngine::Render(
-    const EngineParameters& parameters,
-    float* out,
-    float* aux,
-    size_t size,
-    bool* already_enveloped) {
-  fill(&out[0], &out[size], 0.0f);
-  fill(&aux[0], &aux[size], 0.0f);
+class StringMachineEngine : public Engine {
+ public:
+  StringMachineEngine() { }
+  ~StringMachineEngine() { }
   
-//  ONE_POLE(harmonics_lp_, parameters.harmonics, 0.01f);
-    // vb, reduce interpolation time a little
-    ONE_POLE(harmonics_lp_, parameters.harmonics, 0.2f);
+  virtual void Init(stmlib::BufferAllocator* allocator);
+  virtual void Reset();
+  virtual void LoadUserData(const uint8_t* user_data) { }
+  virtual void Render(const EngineParameters& parameters,
+      float* out,
+      float* aux,
+      size_t size,
+      bool* already_enveloped);
+
+ private:
+  void ComputeRegistration(float registration, float* amplitudes);
   
-  voice_.Render(
-      parameters.trigger & TRIGGER_UNPATCHED,
-      parameters.trigger & TRIGGER_RISING_EDGE,
-      parameters.accent,
-      NoteToFrequency(parameters.note),
-      harmonics_lp_,
-      parameters.timbre,
-      parameters.morph,
-      temp_buffer_,
-      out,
-      aux,
-      size);
-}
+  ChordBank chords_;
+  
+  Ensemble ensemble_;
+  StringSynthOscillator divide_down_voice_[kChordNumNotes];
+  stmlib::NaiveSvf svf_[2];
+  
+  float morph_lp_;
+  float timbre_lp_;
+  
+  DISALLOW_COPY_AND_ASSIGN(StringMachineEngine);
+};
 
 }  // namespace plaits
+
+#endif  // PLAITS_DSP_ENGINE_STRING_MACHINE_ENGINE_H_

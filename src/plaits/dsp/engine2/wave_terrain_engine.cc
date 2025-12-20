@@ -26,19 +26,17 @@
 //
 // Wave terrain synthesis.
 
-#include "plaits/dsp/engine/wave_terrain_engine.h"
+#include "plaits/dsp/engine2/wave_terrain_engine.h"
 
 #include <cmath>
 #include <algorithm>
 
-#include "plaits/dsp/oscillator/sine_oscillator.h"
 #include "plaits/dsp/oscillator/wavetable_oscillator.h"
 
 namespace plaits {
 
 using namespace std;
 using namespace stmlib;
-
 
 void WaveTerrainEngine::Init(BufferAllocator* allocator) {
   path_.Init();

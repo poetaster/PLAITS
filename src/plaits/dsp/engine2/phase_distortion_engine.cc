@@ -27,7 +27,7 @@
 // Phase distortion and phase modulation with an asymmetric triangle as the
 // modulator.
 
-#include "plaits/dsp/engine/phase_distortion_engine.h"
+#include "plaits/dsp/engine2/phase_distortion_engine.h"
 
 #include <algorithm>
 

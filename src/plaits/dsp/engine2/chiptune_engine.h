@@ -1,4 +1,4 @@
-// Copyright 2016 Emilie Gillet.
+// Copyright 2021 Emilie Gillet.
 //
 // Author: Emilie Gillet (emilie.o.gillet@gmail.com)
 //
@@ -24,25 +24,56 @@
 //
 // -----------------------------------------------------------------------------
 //
-// LPC10 encoded words extracted from various TI ROMs.
+// Chiptune waveforms with arpeggiator.
 
-#ifndef PLAITS_DSP_SPEECH_LPC_SPEECH_SYNTH_WORDS_H_
-#define PLAITS_DSP_SPEECH_LPC_SPEECH_SYNTH_WORDS_H_
+#ifndef PLAITS_DSP_ENGINE_CHIPTUNE_ENGINE_H_
+#define PLAITS_DSP_ENGINE_CHIPTUNE_ENGINE_H_
 
-#include "plaits/dsp/speech/lpc_speech_synth_controller.h"
+#include "plaits/dsp/chords/chord_bank.h"
+#include "plaits/dsp/engine/engine.h"
+#include "plaits/dsp/engine2/arpeggiator.h"
+#include "plaits/dsp/oscillator/nes_triangle_oscillator.h"
+#include "plaits/dsp/oscillator/super_square_oscillator.h"
 
 namespace plaits {
 
-#define LPC_SPEECH_SYNTH_NUM_WORD_BANKS 5
-
-extern const uint8_t bank_0[1233];
-extern const uint8_t bank_1[900];
-extern const uint8_t bank_2[1552];
-extern const uint8_t bank_3[2524];
-extern const uint8_t bank_4[4802];
-
-extern const LPCSpeechSynthWordBankData word_banks_[LPC_SPEECH_SYNTH_NUM_WORD_BANKS];
+class ChiptuneEngine : public Engine {
+ public:
+  ChiptuneEngine() { }
+  ~ChiptuneEngine() { }
+  
+  enum {
+    NO_ENVELOPE = 2
+  };
+  
+  virtual void Init(stmlib::BufferAllocator* allocator);
+  virtual void Reset();
+  virtual void LoadUserData(const uint8_t* user_data) { }
+  virtual void Render(const EngineParameters& parameters,
+      float* out,
+      float* aux,
+      size_t size,
+      bool* already_enveloped);
+  
+  inline void set_envelope_shape(float envelope_shape) {
+    envelope_shape_ = envelope_shape;
+  }
+  
+ private:
+  SuperSquareOscillator voice_[kChordNumVoices];
+  NESTriangleOscillator<> bass_;
+  
+  ChordBank chords_;
+  Arpeggiator arpeggiator_;
+  stmlib::HysteresisQuantizer2 arpeggiator_pattern_selector_;
+  
+  float envelope_shape_;
+  float envelope_state_;
+  float aux_envelope_amount_;
+  
+  DISALLOW_COPY_AND_ASSIGN(ChiptuneEngine);
+};
 
 }  // namespace plaits
 
-#endif  // PLAITS_DSP_SPEECH_LPC_SPEECH_SYNTH_WORDS_H_
+#endif  // PLAITS_DSP_ENGINE_CHIPTUNE_ENGINE_H_

@@ -24,9 +24,9 @@
 //
 // -----------------------------------------------------------------------------
 //
-// Swarm of sawtooths and sines.
+// One voice of modal synthesis.
 
-#include "plaits/dsp/engine/swarm_engine.h"
+#include "plaits/dsp/engine/modal_engine.h"
 
 #include <algorithm>
 
@@ -35,50 +35,39 @@ namespace plaits {
 using namespace std;
 using namespace stmlib;
 
-void SwarmEngine::Init(BufferAllocator* allocator) {
-  const float n = (kNumSwarmVoices - 1) / 2;
-  for (int i = 0; i < kNumSwarmVoices; ++i) {
-    float rank = (static_cast<float>(i) - n) / n;
-    swarm_voice_[i].Init(rank);
-  }
+void ModalEngine::Init(BufferAllocator* allocator) {
+  temp_buffer_ = allocator->Allocate<float>(kMaxBlockSize);
+  harmonics_lp_ = 0.0f;
+  Reset();
 }
 
-void SwarmEngine::Reset() { }
+void ModalEngine::Reset() {
+  voice_.Init();
+}
 
-void SwarmEngine::Render(
+void ModalEngine::Render(
     const EngineParameters& parameters,
     float* out,
     float* aux,
     size_t size,
     bool* already_enveloped) {
-  const float f0 = NoteToFrequency(parameters.note);
-  const float control_rate = static_cast<float>(size);
-  const float density = NoteToFrequency(parameters.timbre * 120.0f) * \
-      0.025f * control_rate;
-  const float spread = parameters.harmonics * parameters.harmonics * \
-      parameters.harmonics;
-  float size_ratio = 0.25f * SemitonesToRatio(
-      (1.0f - parameters.morph) * 84.0f);
-  
-  const bool burst_mode = !(parameters.trigger & TRIGGER_UNPATCHED);
-  const bool start_burst = parameters.trigger & TRIGGER_RISING_EDGE;
-
   fill(&out[0], &out[size], 0.0f);
   fill(&aux[0], &aux[size], 0.0f);
   
-  for (int i = 0; i < kNumSwarmVoices; ++i) {
-    swarm_voice_[i].Render(
-        f0,
-        density,
-        burst_mode,
-        start_burst,
-        spread,
-        size_ratio,
-        out,
-        aux,
-        size);
-    size_ratio *= 0.97f;
-  }
+  ONE_POLE(harmonics_lp_, parameters.harmonics, 0.01f);
+  
+  voice_.Render(
+      parameters.trigger & TRIGGER_UNPATCHED,
+      parameters.trigger & TRIGGER_RISING_EDGE,
+      parameters.accent,
+      NoteToFrequency(parameters.note),
+      harmonics_lp_,
+      parameters.timbre,
+      parameters.morph,
+      temp_buffer_,
+      out,
+      aux,
+      size);
 }
 
 }  // namespace plaits

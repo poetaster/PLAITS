@@ -1,4 +1,4 @@
-// Copyright 2016 Emilie Gillet.
+// Copyright 2021 Emilie Gillet.
 //
 // Author: Emilie Gillet (emilie.o.gillet@gmail.com)
 //
@@ -24,42 +24,52 @@
 //
 // -----------------------------------------------------------------------------
 //
-// 808 and synthetic bass drum generators.
+// Wave terrain synthesis - a 2D function evaluated along an elliptical path of
+// adjustable center and excentricity.
+//
+// This implementation initially used pre-computed terrains stored in flash
+// memory, but even at a poor resolution of 64x64 with 8-bit samples, this
+// takes 4kb per terrain! It turned out that directly evaluating the terrain
+// function on the fly uses less flash, but is also faster than bicubic
+// interpolation of the terrain data.
 
-#ifndef PLAITS_DSP_ENGINE_BASS_DRUM_ENGINE_H_
-#define PLAITS_DSP_ENGINE_BASS_DRUM_ENGINE_H_
+#ifndef PLAITS_DSP_ENGINE_WAVE_TERRAIN_ENGINE_H_
+#define PLAITS_DSP_ENGINE_WAVE_TERRAIN_ENGINE_H_
 
-#include "plaits/dsp/drums/analog_bass_drum.h"
-#include "plaits/dsp/drums/synthetic_bass_drum.h"
 #include "plaits/dsp/engine/engine.h"
-#include "plaits/dsp/fx/overdrive.h"
-#include "plaits/dsp/fx/sample_rate_reducer.h"
+#include "plaits/dsp/oscillator/sine_oscillator.h"
 
 namespace plaits {
   
-class BassDrumEngine : public Engine {
+class WaveTerrainEngine : public Engine {
  public:
-  BassDrumEngine() { }
-  ~BassDrumEngine() { }
+  WaveTerrainEngine() { }
+  ~WaveTerrainEngine() { }
   
   virtual void Init(stmlib::BufferAllocator* allocator);
   virtual void Reset();
-  virtual void LoadUserData(const uint8_t* user_data) { }
+  virtual void LoadUserData(const uint8_t* user_data) {
+    user_terrain_ = (const int8_t*)(user_data);
+  }
   virtual void Render(const EngineParameters& parameters,
       float* out,
       float* aux,
       size_t size,
       bool* already_enveloped);
-
+  
  private:
-  AnalogBassDrum analog_bass_drum_;
-  SyntheticBassDrum synthetic_bass_drum_;
+  float Terrain(float x, float y, int terrain_index);
   
-  Overdrive overdrive_;
+  FastSineOscillator path_;
+  float offset_;
+  float terrain_;
   
-  DISALLOW_COPY_AND_ASSIGN(BassDrumEngine);
+  float* temp_buffer_;
+  const int8_t* user_terrain_;
+  
+  DISALLOW_COPY_AND_ASSIGN(WaveTerrainEngine);
 };
 
 }  // namespace plaits
 
-#endif  // PLAITS_DSP_ENGINE_BASS_DRUM_ENGINE_H_
+#endif  // PLAITS_DSP_ENGINE_WAVE_TERRAIN_ENGINE_H_
