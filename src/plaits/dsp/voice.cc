@@ -165,12 +165,12 @@ void Voice::Render(
 
   float internal_env_amp = 1.0f;
   float internal_env_amp_timbre = 1.0f;
-  if (engine_index == 15) {
+  if (engine_index == 7) {
     internal_env_amp = 2.0f - p.harmonics * 6.0f;
     CONSTRAIN(internal_env_amp, 0.0f, 1.0f);
     speech_engine_.set_prosody_amount(!modulations.trigger_patched || modulations.frequency_patched ? 0.0f : patch.frequency_modulation_amount);
     speech_engine_.set_speed(!modulations.trigger_patched || modulations.morph_patched ? 0.0f : patch.morph_modulation_amount);
-  } else if (engine_index == 7) {
+  } else if (engine_index == 15) {
      if (modulations.trigger_patched && !modulations.timbre_patched) {
   internal_env_amp_timbre = 0.0f;
   chiptune_engine_.set_envelope_shape(patch.timbre_modulation_amount);
