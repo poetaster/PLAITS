@@ -200,6 +200,7 @@ void loop1() {
   if (engineInc > 4) {
     engineCount ++; // don't switch engine so often :)
     engineInc = 0;
+    if (engineCount == 23) CONSTRAIN(timbre_in, 0.f,0.33f); // string machine bug fix
     voice.patch.engine = engineCount;
   }
   if (engineCount > 24) engineCount = 0;
@@ -216,6 +217,7 @@ void loop1() {
   pitch_in = pitch;
   harm_in = harmonics;
   morph_in = morph;
+  if (engineCount == 23) CONSTRAIN(timbre, 0.f,0.33f); // string machine bug fix
   timbre_in = timbre;
 
   changeEngine(engineCount);
