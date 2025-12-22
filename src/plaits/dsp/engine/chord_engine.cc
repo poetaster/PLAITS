@@ -56,16 +56,19 @@ const float fade_point[kChordNumVoices] = {
   0.55f, 0.47f, 0.49f, 0.51f, 0.53f
 };
 
-const int kRegistrationTableSize = 8;
+const int kRegistrationTableSize = 11;
 const float registrations[kRegistrationTableSize][kChordNumHarmonics * 2] = {
-  { 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },  // Square
-  { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },  // Saw
-  { 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f },  // Saw + saw
-  { 0.33f, 0.0f, 0.33f, 0.0f, 0.33f, 0.0f },  // Full saw
-  { 0.33f, 0.0f, 0.0f, 0.33f, 0.0f, 0.33f },  // Full saw + square hybrid
-  { 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f },  // Saw + high square harmo
-  { 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.5f },  // Square + high square harmo
-  { 0.0f, 0.1f, 0.1f, 0.0f, 0.2f, 0.6f },  // // Saw+square + high harmo
+  { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },    // Saw
+  { 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f },    // Saw + saw
+  { 0.4f, 0.0f, 0.2f, 0.0f, 0.4f, 0.0f },    // Full saw
+  { 0.3f, 0.0f, 0.0f, 0.3f, 0.0f, 0.4f },    // Full saw + square hybrid
+  { 0.3f, 0.0f, 0.0f, 0.0f, 0.0f, 0.7f },    // Saw + high square harmo
+  { 0.2f, 0.0f, 0.0f, 0.2f, 0.0f, 0.6f },    // Weird hybrid
+  { 0.0f, 0.2f, 0.1f, 0.0f, 0.2f, 0.5f },    // Sawsquare high harmo
+  { 0.0f, 0.3f, 0.0f, 0.3f, 0.0f, 0.4f },    // Square high armo
+  { 0.0f, 0.4f, 0.0f, 0.3f, 0.0f, 0.3f },    // Full square
+  { 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f },    // Square + Square
+  { 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },    // Square
 };
 
 void ChordEngine::ComputeRegistration(

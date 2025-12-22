@@ -67,7 +67,7 @@
 #include "plaits/dsp/fx/low_pass_gate.h"
 
 namespace plaits {
-using namespace smachine;
+//using namespace smachine;
 
 const int kMaxEngines = 25;
 const int kMaxTriggerDelay = 8;

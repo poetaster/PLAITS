@@ -36,7 +36,7 @@ using namespace std;
 using namespace stmlib;
 
 namespace plaits {
-namespace smachine {
+//namespace smachine {
 
 
 
@@ -57,7 +57,7 @@ void StringMachineEngine::Reset() {
   ensemble_.Reset();
 }
 
-const int sRegistrationTableSize = 11;
+/*const int sRegistrationTableSize = 11;
 const float registrations[sRegistrationTableSize][kChordNumHarmonics * 2] = {
   { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },    // Saw
   { 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f },    // Saw + saw
@@ -70,12 +70,12 @@ const float registrations[sRegistrationTableSize][kChordNumHarmonics * 2] = {
   { 0.0f, 0.4f, 0.0f, 0.3f, 0.0f, 0.3f },    // Full square
   { 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f },    // Square + Square
   { 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },    // Square
-};
+};*/
 
 void StringMachineEngine::ComputeRegistration(
     float registration,
     float* amplitudes) {
-  registration *= (sRegistrationTableSize - 1.001f);
+  registration *= (kRegistrationTableSize - 1.001f);
   MAKE_INTEGRAL_FRACTIONAL(registration);
   
   for (int i = 0; i < kChordNumHarmonics * 2; ++i) {
@@ -138,5 +138,5 @@ void StringMachineEngine::Render(
   ensemble_.Process(out, aux, size);
 }
 
- }  // namespace smachine
+// }  // namespace smachine
 }  // namespace plaits
