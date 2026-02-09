@@ -30,9 +30,7 @@
 #define PLAITS_SETTINGS_H_
 
 #include "stmlib/stmlib.h"
-#include "stmlib/system/storage.h"
 
-#include "plaits/drivers/cv_adc.h"
 
 namespace plaits {
   
