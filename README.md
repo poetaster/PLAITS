@@ -1,7 +1,7 @@
 # arduinoMI
 Ports of mutable intstruments eurorack code to arduino.
 
-* plaits works fine on the RP2350 only
+* plaits works fine on the RP2350 only. Currently, the plaits1.2 branch is working fine including the 6op FM voices. I'll merge to main after adapting all the sketches.
 
 This port was possible because of the work of Volker Boehm to bring MI modules to supercollider: https://github.com/v7b1/mi-UGens Very cool.
 
