@@ -1,6 +1,10 @@
 # arduinoMI
 Ports of mutable intstruments eurorack code to arduino.
 
+# 2.3.x VS 1.8.19 ide notes
+
+plaits1.2 branch compiles with the STMLIB plaits1.2 branch on 1.8.19 AS is. On the 2.x.x series, remove the LIB/src/lib_all.cpp file.
+
 * plaits works fine on the RP2350 only. Currently, the plaits1.2 branch is working fine including the 6op FM voices. I'll merge to main after adapting all the sketches.
 
 This port was possible because of the work of Volker Boehm to bring MI modules to supercollider: https://github.com/v7b1/mi-UGens Very cool.
